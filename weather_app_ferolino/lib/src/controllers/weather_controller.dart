@@ -18,11 +18,11 @@ class WeatherController {
   final StreamController<String?> _controller = StreamController();
   Stream<String?> get stream => _controller.stream;
 
-  WeatherController() {
+  WeatherController(SearchController sCtr) {
     lc = Location();
-    sc = SearchController();
+    sc = sCtr;
     ws = WeatherFactory(apiKey);
-    onStartUp();
+    setCity(cityName);
   }
 
   void onStartUp() async {
@@ -69,9 +69,16 @@ class WeatherController {
   }
 
   void setCity(String city) {
-    cityName = city;
-    setWeather();
-    setForecast();
+    print(sc.searchHistory);
+    if (sc.searchHistory.isNotEmpty) {
+      print('Im here1');
+      cityName = city;
+      setWeather();
+      setForecast();
+    } else if (sc.searchHistory.isEmpty) {
+      print('Im here2');
+      onStartUp();
+    }
   }
 
   void setWeather() async {

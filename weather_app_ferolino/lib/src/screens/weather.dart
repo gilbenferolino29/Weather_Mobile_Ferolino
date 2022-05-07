@@ -116,7 +116,7 @@ class _SingleWeatherState extends State<SingleWeather> {
                         itemCount: widget.wc.currentForecast.length,
                         itemBuilder: (context, index) {
                           final data = widget.wc.currentForecast;
-                          print(data);
+                          //print(data);
                           return Padding(
                             padding: const EdgeInsets.all(3.0),
                             child: Container(

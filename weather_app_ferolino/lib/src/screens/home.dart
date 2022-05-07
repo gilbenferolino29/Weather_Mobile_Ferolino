@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 import 'package:weather_app_ferolino/src/controllers/search_controller.dart';
 import 'package:weather_app_ferolino/src/controllers/weather_controller.dart';
+import 'package:weather_app_ferolino/src/screens/homepage.dart';
 import 'package:weather_app_ferolino/src/screens/weather.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,8 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    wcController = WeatherController();
-    scController = SearchController();
+    wcController = WeatherController(scController = SearchController());
+
     super.initState();
   }
 
@@ -32,61 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    //print(scController.searchHistory);
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: FloatingSearchBar(
         controller: scController.controller,
         body: FloatingSearchBarScrollNotifier(
-          child: SafeArea(
-            child: Stack(
-              children: [
-                Image.asset(
-                  'assets/images/sample.png',
-                  fit: BoxFit.cover,
-                  height: double.infinity,
-                  width: double.infinity,
-                ),
-                Container(
-                  decoration: const BoxDecoration(color: Colors.black38),
-                ),
-                StreamBuilder(
-                    stream: wcController.stream,
-                    builder: (BuildContext context,
-                        AsyncSnapshot<String?> snapshot) {
-                      switch (snapshot.connectionState) {
-                        case ConnectionState.none:
-                          return messageBox(
-                            context,
-                            "No Internet Connection",
-                            "try again later",
-                          );
-
-                        case ConnectionState.waiting:
-                          return const Center(
-                              child: CircularProgressIndicator());
-
-                        default:
-                          messageBox(
-                            context,
-                            "Something is wrong",
-                            "",
-                          );
-                      }
-                      if (snapshot.hasError) {
-                        return messageBox(
-                          context,
-                          '"${wcController.cityName}" not found',
-                          'Try searching for a city name',
-                        );
-                      } else if (!snapshot.hasData) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else {
-                        return SingleWeather(wc: wcController);
-                      }
-                    }),
-              ],
-            ),
-          ),
+          child: HomePage(wc: wcController),
         ),
         transition: CircularFloatingSearchBarTransition(),
         physics: const BouncingScrollPhysics(),
@@ -112,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             scController.addSearchTerm(query);
             scController.selectedTerm = query;
+            wcController.setCity(scController.selectedTerm!);
           });
           scController.controller.close;
         },
@@ -151,6 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 .addSearchTerm(scController.controller.query);
                             scController.selectedTerm =
                                 scController.controller.query;
+                            wcController.setCity(scController.selectedTerm!);
                           },
                         );
                         scController.controller.close();
@@ -180,6 +135,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                   });
                                 },
                               ),
+                              onTap: () {
+                                setState(() {
+                                  scController.putSearchTermFirst(term);
+                                  scController.selectedTerm = term;
+                                  wcController
+                                      .setCity(scController.selectedTerm!);
+                                });
+                                scController.controller.close();
+                              },
                             ),
                           )
                           .toList(),
@@ -190,26 +154,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
-      ),
-    );
-  }
-
-  SizedBox messageBox(BuildContext context, String s, String t) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height / 1.3,
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            t,
-            style: Theme.of(context).textTheme.headline5,
-          ),
-          Text(
-            s,
-            style: TextStyle(color: Theme.of(context).primaryColor),
-          ),
-        ],
       ),
     );
   }
