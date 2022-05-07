@@ -2,20 +2,70 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:weather/weather.dart';
+import 'package:weather_app_ferolino/src/controllers/search_controller.dart';
 import 'package:weather_app_ferolino/src/shared/constants.dart';
+import 'package:location/location.dart';
 
 class WeatherController {
   late String cityName = '';
   late Weather currentWeather;
   late List<Weather> currentForecast;
-  late WeatherFactory ws;
 
+  late WeatherFactory ws;
+  late SearchController sc;
+  late Location lc;
+  late LocationData currentLocation;
   final StreamController<String?> _controller = StreamController();
   Stream<String?> get stream => _controller.stream;
 
   WeatherController() {
+    lc = Location();
+    sc = SearchController();
     ws = WeatherFactory(apiKey);
-    setCity(cityName == '' ? 'Philippines' : cityName);
+    onStartUp();
+  }
+
+  void onStartUp() async {
+    _controller.add(null);
+    try {
+      currentLocation = await getLocation();
+      currentWeather = await ws.currentWeatherByLocation(
+          currentLocation.latitude!, currentLocation.longitude!);
+      currentForecast = await ws.fiveDayForecastByLocation(
+          currentLocation.latitude!, currentLocation.longitude!);
+      _controller.add("success");
+    } catch (e) {
+      print(e);
+      _controller.addError((e));
+    }
+  }
+
+  getLocation() async {
+    Location location = new Location();
+
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    _locationData = await location.getLocation();
+    currentLocation = _locationData;
+    return currentLocation;
   }
 
   void setCity(String city) {
