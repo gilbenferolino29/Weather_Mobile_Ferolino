@@ -1,15 +1,21 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:weather/weather.dart';
 import 'package:weather_app_ferolino/src/controllers/search_controller.dart';
 import 'package:weather_app_ferolino/src/shared/constants.dart';
 import 'package:location/location.dart';
+import 'dart:convert' as convert;
+import 'package:lat_lng_to_timezone/lat_lng_to_timezone.dart' as tzmap;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 class WeatherController {
   late String cityName = '';
   late Weather currentWeather;
   late List<Weather> currentForecast;
+  late String timezone;
 
   late WeatherFactory ws;
   late SearchController sc;
@@ -22,6 +28,7 @@ class WeatherController {
     lc = Location();
     sc = sCtr;
     ws = WeatherFactory(apiKey);
+
     setCity(cityName);
   }
 
@@ -40,8 +47,21 @@ class WeatherController {
     }
   }
 
+  DateTime setTime(lat, lon) {
+    try {
+      final timezoneTime =
+          tz.getLocation(tzmap.latLngToTimezoneString(lat, lon));
+      var ct = tz.TZDateTime.now(timezoneTime);
+
+      print(ct);
+      return ct;
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
   getLocation() async {
-    Location location = new Location();
+    Location location = Location();
 
     bool _serviceEnabled;
     PermissionStatus _permissionGranted;
@@ -75,19 +95,61 @@ class WeatherController {
       cityName = city;
       setWeather();
       setForecast();
+      print(currentWeather);
     } else if (sc.searchHistory.isEmpty) {
       print('Im here2');
       onStartUp();
     }
   }
 
+  Image bgGuide(lat, lon) {
+    if (bgTime(lat, lon) > 18 || bgTime(lat, lon) < 4) {
+      return Image.asset(
+        "assets/images/night.jpg",
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    } else if (bgTime(lat, lon) > 15) {
+      return Image.asset(
+        "assets/images/afternoon.jpg",
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    } else if (bgTime(lat, lon) > 6) {
+      return Image.asset(
+        "assets/images/morning.jpg",
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    } else if (bgTime(lat, lon) >= 4) {
+      return Image.asset(
+        "assets/images/afternoon.jpg",
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    } else {
+      return Image.asset(
+        "assets/images/morning.jpg",
+        fit: BoxFit.cover,
+        height: double.infinity,
+        width: double.infinity,
+      );
+    }
+  }
+
   void setWeather() async {
     _controller.add(null);
-
+    tz.initializeTimeZones();
     try {
-      http.Response response = await queryCurrentWeather();
+      final response = await queryCurrentWeather();
 
       if (response.statusCode == 200) {
+        final res = convert.jsonDecode(response.body);
+        timezone = res['timezone'];
         _controller.add("success");
       } else {
         print(response.statusCode);
@@ -106,6 +168,7 @@ class WeatherController {
       http.Response response = await queryCurrentForecast();
 
       if (response.statusCode == 200) {
+        //print(timezone);
         _controller.add("success");
       } else {
         print(response.statusCode);
@@ -133,6 +196,7 @@ class WeatherController {
     );
 
     final response = await http.get(url);
+
     return response;
   }
 
@@ -147,11 +211,15 @@ class WeatherController {
         .replaceAll(" Celsius", "°");
   }
 
-  String formatTime() {
+  formatTime(lat, lon) {
     return DateFormat.yMMMMd('en_US')
         .add_jm()
-        .format(currentWeather.date!)
+        .format(setTime(lat, lon))
         .toString();
+  }
+
+  bgTime(lat, lon) {
+    return setTime(lat, lon).hour;
   }
 
   String formatTimeFC(index) {

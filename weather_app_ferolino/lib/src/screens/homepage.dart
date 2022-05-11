@@ -11,15 +11,6 @@ class HomePage extends StatelessWidget {
     return SafeArea(
       child: Stack(
         children: [
-          Image.asset(
-            'assets/images/sample.png',
-            fit: BoxFit.cover,
-            height: double.infinity,
-            width: double.infinity,
-          ),
-          Container(
-            decoration: const BoxDecoration(color: Colors.black38),
-          ),
           StreamBuilder(
               stream: wc.stream,
               builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {

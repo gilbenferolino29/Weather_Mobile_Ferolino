@@ -41,6 +41,8 @@ dependencies:
   http: ^0.13.4
   intl: ^0.17.0
   material_floating_search_bar: ^0.3.7
+  timezone: ^0.8.0
+  lat_lng_to_timezone: ^0.2.0
 
 dev_dependencies:
   flutter_test:
