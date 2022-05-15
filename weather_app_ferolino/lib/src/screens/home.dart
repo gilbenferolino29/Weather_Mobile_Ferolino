@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: FloatingSearchBar(
+        backgroundColor: Color.fromARGB(255, 65, 95, 151),
         controller: scController.controller,
         body: FloatingSearchBarScrollNotifier(
           child: HomePage(wc: wcController),

@@ -36,7 +36,7 @@ class _SingleWeatherState extends State<SingleWeather> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          height: 120,
+                          height: 50,
                         ),
                         Text(
                           widget.wc.currentWeather.areaName.toString(),
